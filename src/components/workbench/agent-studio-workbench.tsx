@@ -26,6 +26,13 @@ import { generatePlaybookDraft } from "@/lib/playbook/generate"
 import { generateBehaviorDiff } from "@/lib/review/behavior-diff"
 import { generatePlan } from "@/lib/review/plan"
 import { validateRuleText } from "@/lib/playbook/update-rules"
+import { computeExportReadiness, isDraftInvalid } from "@/lib/review/export-readiness"
+import { generateExportBundle, bundleToBlob } from "@/lib/export/generate-bundle"
+import { ExportToast } from "@/components/export/toast"
+import { useExportFeedback } from "@/components/export/use-export-feedback"
+import { generatePatchArchive } from "@/lib/export/generate-patch-archive"
+import type { ArtifactPair } from "@/lib/export/generate-patch"
+import { downloadBlob } from "@/lib/export/download-blob"
 import { TRANSLATORS } from "@/lib/translators/index"
 import type { AgentPlaybook } from "@/lib/playbook/schema"
 import {
@@ -65,6 +72,9 @@ export function AgentStudioWorkbench() {
   const [ruleTextDrafts, setRuleTextDrafts] = useState<Record<string, string>>(
     {}
   )
+  const [initialGeneratedArtifacts, setInitialGeneratedArtifacts] = useState<
+    ArtifactPair[] | null
+  >(null)
   const baseWorkspace = sampleRepoWorkspace
   const workspace = useMemo(
     () =>
@@ -101,6 +111,11 @@ export function AgentStudioWorkbench() {
     if (playbook == null || initialRules == null) return null
     return generateBehaviorDiff(initialRules, playbook.rules)
   }, [initialRules, playbook])
+  const exportReadiness = useMemo(
+    () => computeExportReadiness(playbook, ruleTextDrafts),
+    [playbook, ruleTextDrafts]
+  )
+  const { feedback, showSuccess, showError, dismiss } = useExportFeedback()
   const sectionStatus = (
     name: Parameters<typeof getPlaybookSectionStatus>[1]
   ) => getPlaybookSectionStatus(workspace.playbookSections, name)
@@ -138,7 +153,7 @@ export function AgentStudioWorkbench() {
     ruleTextDrafts[ruleId] !== undefined ? ruleTextDrafts[ruleId] : ruleText
   const getRuleError = (ruleId: string): string | undefined => {
     const draft = ruleTextDrafts[ruleId]
-    if (draft !== undefined && draft.trim().length === 0)
+    if (draft !== undefined && isDraftInvalid(draft))
       return "Rule cannot be empty."
     return undefined
   }
@@ -187,11 +202,22 @@ export function AgentStudioWorkbench() {
 
       setPlaybook(nextPlaybook)
       setInitialRules(nextPlaybook.rules)
+      // Capture initial generated artifacts as diff baseline
+      setInitialGeneratedArtifacts(
+        TRANSLATORS.flatMap((t) =>
+          t.translate(nextPlaybook).artifacts.map((a) => ({
+            path: a.path,
+            before: a.content,
+            after: a.content,
+          }))
+        )
+      )
       setPlaybookError(null)
       setNewRuleText("")
     } catch (error) {
       setPlaybook(null)
       setInitialRules(null)
+      setInitialGeneratedArtifacts(null)
       setPlaybookError(
         error instanceof Error
           ? error.message
@@ -200,8 +226,70 @@ export function AgentStudioWorkbench() {
     }
   }
 
+  const handleDownloadGeneratedFiles = async () => {
+    if (playbook == null) return
+    try {
+      const translatorResults = TRANSLATORS.map((t) => ({
+        label: t.label,
+        artifacts: t.translate(playbook).artifacts,
+      }))
+      const { buffer, filename } = await generateExportBundle(playbook, translatorResults)
+      const blob = bundleToBlob(buffer)
+      downloadBlob(blob, filename)
+      showSuccess("Generated files ready for review.")
+    } catch {
+      showError("Failed to generate export bundle. Please try again.", handleDownloadGeneratedFiles)
+    }
+  }
+
+  const handleDownloadPatch = async () => {
+    if (playbook == null || initialGeneratedArtifacts == null) return
+    try {
+      const translatorResults = TRANSLATORS.map((t) => ({
+        label: t.label,
+        artifacts: t.translate(playbook).artifacts,
+      }))
+      const currentArtifacts = translatorResults.flatMap((r) =>
+        r.artifacts.map((a) => ({ path: a.path, content: a.content }))
+      )
+      const currentByPath = new Map(currentArtifacts.map((a) => [a.path, a.content]))
+      const currentPaths = new Set(currentArtifacts.map((a) => a.path))
+      const pairs: ArtifactPair[] = []
+      const seen = new Set<string>()
+
+      for (const initial of initialGeneratedArtifacts) {
+        seen.add(initial.path)
+        pairs.push({
+          path: initial.path,
+          before: initial.before,
+          after: currentByPath.get(initial.path) ?? "",
+        })
+      }
+      for (const current of currentArtifacts) {
+        if (!seen.has(current.path)) {
+          seen.add(current.path)
+          pairs.push({ path: current.path, before: "", after: current.content })
+        }
+      }
+      for (const initial of initialGeneratedArtifacts) {
+        if (!currentPaths.has(initial.path)) {
+          pairs.push({ path: initial.path, before: initial.before, after: "" })
+        }
+      }
+      const { buffer, filename } = await generatePatchArchive(
+        playbook, pairs, translatorResults
+      )
+      const blob = bundleToBlob(buffer)
+      downloadBlob(blob, filename)
+      showSuccess("Patch ready for review.")
+    } catch {
+      showError("Failed to generate patch. Please try again.", handleDownloadPatch)
+    }
+  }
+
   return (
     <main className="min-h-svh bg-background text-foreground">
+      <ExportToast feedback={feedback} onDismiss={dismiss} />
       <div className="flex min-h-svh flex-col">
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
           <div className="flex min-w-0 items-center gap-3">
@@ -213,12 +301,20 @@ export function AgentStudioWorkbench() {
               {workspace.name}
             </span>
           </div>
-          <Button
-            disabled
-            title="Create an Agent Playbook before downloading a patch"
+          <Button disabled={!exportReadiness.canExport}
+            onClick={handleDownloadPatch}
+            title={exportReadiness.reason ?? "Download the reviewable patch for this Playbook"}
           >
             <Download aria-hidden="true" />
             Download Patch
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!exportReadiness.canExport}
+            onClick={handleDownloadGeneratedFiles}
+            title={exportReadiness.reason ?? "Download generated files from the current Playbook"}
+          >
+            Download Generated Files
           </Button>
         </header>
 

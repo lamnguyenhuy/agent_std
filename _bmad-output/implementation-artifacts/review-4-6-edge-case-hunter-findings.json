@@ -1,0 +1,44 @@
+[
+  {
+    "location": "src/components/export/toast.tsx:22-25",
+    "trigger_condition": "component re-renders while success toast is visible (e.g., Rule edit triggers playbook state change)",
+    "guard_snippet": "useEffect(() => { const timer = setTimeout(dismiss, 5000); return () => clearTimeout(timer); }, [type, dismiss])",
+    "potential_consequence": "Timer resets on every re-render. Success toast stays visible longer than 5 seconds."
+  },
+  {
+    "location": "src/components/export/use-export-feedback.ts:18-20",
+    "trigger_condition": "showError called twice in quick succession (e.g., rapid double-click on export)",
+    "guard_snippet": "setFeedback({ type: 'error', message, retry }) — replaces previous feedback",
+    "potential_consequence": "Second call overwrites first. If first error had a different message, user sees only the last one."
+  },
+  {
+    "location": "src/components/export/toast.tsx:58-63",
+    "trigger_condition": "retry callback is stale (captures old closure from render cycle)",
+    "guard_snippet": "retry is stored in useState at showError time",
+    "potential_consequence": "If state changes between error show and retry click, retry handler operates on outdated state."
+  },
+  {
+    "location": "src/components/export/toast.tsx:38-48",
+    "trigger_condition": "message string is very long (e.g., 500+ characters)",
+    "guard_snippet": "max-w-sm with no text truncation",
+    "potential_consequence": "Long message overflows toast width. No word-break or truncation applied."
+  },
+  {
+    "location": "src/components/workbench/agent-studio-workbench.tsx:239-241",
+    "trigger_condition": "handleDownloadGeneratedFiles is called but component has unmounted before async completion",
+    "guard_snippet": "No mounted check before showSuccess/showError",
+    "potential_consequence": "React state update on unmounted component warning. Toast state is set after navigation/unmount."
+  },
+  {
+    "location": "src/components/export/toast.tsx:22-25",
+    "trigger_condition": "dismiss is called while setTimeout is pending",
+    "guard_snippet": "useEffect cleanup clears timer on unmount, but dismiss doesn't clear it",
+    "potential_consequence": "If user manually dismisses a success toast, the timer still fires dismiss again (no-op since state already null). Harmless but unnecessary setTimeout execution."
+  },
+  {
+    "location": "src/components/export/toast.tsx:5",
+    "trigger_condition": "feedback.type is 'success' and feedback.retry is non-null (theoretically impossible but type allows it)",
+    "guard_snippet": "if (isError && retry) — guards against success+retry",
+    "potential_consequence": "Handled correctly: retry button only appears for error type."
+  }
+]

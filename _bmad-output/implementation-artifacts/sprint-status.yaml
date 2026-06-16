@@ -1,5 +1,5 @@
 # generated: 2026-06-09T20:05:07+07:00
-# last_updated: 2026-06-10T11:22:55+07:00
+# last_updated: 2026-06-16
 # project: agent_std
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,38 +35,38 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-09T20:05:07+07:00
-last_updated: 2026-06-16T09:07:17+07:00
+last_updated: 2026-06-16
 project: agent_std
 project_key: NOKEY
 tracking_system: file-system
 story_location: /Users/lamnh/Downloads/agent_std/_bmad-output/implementation-artifacts
 
 development_status:
-  epic-1: in-progress
+  epic-1: done
   1-1-set-up-initial-project-from-starter-template: done
   1-2-establish-test-and-ci-harness: done
   1-3-show-sample-repo-as-the-primary-workspace: done
   1-4-detect-agent-instruction-files-in-the-sample-repo: done
   1-5-generate-draft-agent-playbook-from-detected-files: done
-  epic-1-retrospective: optional
+  epic-1-retrospective: done
   epic-2: done
   2-1-display-agent-playbook-sections-in-the-workbench: done
   2-2-show-imported-skills-agents-and-context-as-read-only: done
   2-3-add-edit-and-remove-playbook-rules: done
   2-4-validate-rule-editing-and-preserve-accessible-interaction: done
   epic-2-retrospective: done
-  epic-3: in-progress
+  epic-3: done
   3-1-implement-tool-translator-contract-and-preview-shell: done
   3-2-render-claude-code-preview: done
   3-3-render-cursor-preview: done
   3-4-render-windsurf-preview: done
   3-5-show-compatibility-notes-for-adapted-output: done
-  epic-3-retrospective: optional
-  epic-4: in-progress
+  epic-3-retrospective: done
+  epic-4: done
   4-1-generate-file-level-plan-for-current-playbook: done
-  4-2-generate-template-based-behavior-diff-for-rule-changes: in-progress
-  4-3-keep-review-surfaces-synchronized-with-rule-edits: backlog
-  4-4-export-generated-files-bundle: backlog
-  4-5-export-reviewable-patch: backlog
-  4-6-handle-export-success-and-failure-accessibly: backlog
-  epic-4-retrospective: optional
+  4-2-generate-template-based-behavior-diff-for-rule-changes: done
+  4-3-keep-review-surfaces-synchronized-with-rule-edits: done
+  4-4-export-generated-files-bundle: done
+  4-5-export-reviewable-patch: done
+  4-6-handle-export-success-and-failure-accessibly: done
+  epic-4-retrospective: done

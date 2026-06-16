@@ -1,0 +1,50 @@
+[
+  {
+    "location": "src/lib/export/generate-patch.ts:17-18",
+    "trigger_condition": "before or after content uses Windows-style \\r\\n line endings",
+    "guard_snippet": "before.split('\\n'), after.split('\\n')",
+    "potential_consequence": "Trailing \\r remains on every line. LCS comparison fails to match identical lines. Full-file diff produced when content is semantically identical."
+  },
+  {
+    "location": "src/lib/export/generate-patch.ts:118",
+    "trigger_condition": "hunkEnd computed such that unchangedAfter < 3",
+    "guard_snippet": "hunkEnd -= (unchangedAfter - 3)",
+    "potential_consequence": "If unchangedAfter is 0 or 1, subtraction wraps hunkEnd below hunkBegin, producing a negative-length hunk range in @@ line."
+  },
+  {
+    "location": "src/lib/export/generate-patch.ts:121",
+    "trigger_condition": "hunk contains only removed lines and no added lines (or vice versa at file edge)",
+    "guard_snippet": "oldStart/newStart initialized to 0, fallback to 1",
+    "potential_consequence": "Line number may be incorrect for hunks at the very beginning of a file when the first lines are removed."
+  },
+  {
+    "location": "src/lib/export/generate-patch-archive.ts:17-24",
+    "trigger_condition": "translatorResults contain artifacts with paths that include '..' or absolute-style paths (e.g., '/etc/passwd')",
+    "guard_snippet": "zip.file(artifact.path, ...) — no path sanitization",
+    "potential_consequence": "Zip slip vulnerability — artifact paths with '../' could write files outside the intended archive directory when extracted."
+  },
+  {
+    "location": "src/components/workbench/agent-studio-workbench.tsx:252-256",
+    "trigger_condition": "currentByPath.get(initial.path) returns undefined (artifact was removed from translators)",
+    "guard_snippet": "after: currentByPath.get(initial.path) ?? \"\"",
+    "potential_consequence": "Artifact treated as having empty content rather than removed. Diff shows deletion of all lines (correct), but the removed-artifact loop at line 263-265 then adds a duplicate pair with after: \"\"."
+  },
+  {
+    "location": "src/components/workbench/agent-studio-workbench.tsx:252-266",
+    "trigger_condition": "artifact path appears in initialGeneratedArtifacts AND in currentArtifacts with different content, AND also appears in the 'added' or 'removed' path",
+    "guard_snippet": "Three separate loops — initial map, add-new, add-removed",
+    "potential_consequence": "Same artifact path can appear multiple times in pairs array if it crosses multiple categories. generatePatchBundle produces duplicate diff entries for the same file."
+  },
+  {
+    "location": "src/lib/export/generate-patch.ts:17-18",
+    "trigger_condition": "before or after content is a single line without trailing newline (e.g., just 'content')",
+    "guard_snippet": "before.split('\\n') returns ['content']",
+    "potential_consequence": "Single-line content works correctly. No trailing empty line token. Handled."
+  },
+  {
+    "location": "src/components/workbench/agent-studio-workbench.tsx:73-75",
+    "trigger_condition": "handleCreatePlaybook throws during initial artifact generation (t.translate(nextPlaybook) fails)",
+    "guard_snippet": "setInitialGeneratedArtifacts(...) runs before setPlaybookError",
+    "potential_consequence": "If t.translate throws, the setInitialGeneratedArtifacts call is not reached, leaving state as null. handleDownloadPatch then exits early. Graceful degradation."
+  }
+]

@@ -55,7 +55,7 @@ export function BehaviorDiff({ items }: { items: BehaviorDiffItem[] }) {
               {item.summary}
             </span>
           </div>
-          {item.kind === "edited" ? (
+          {item.kind === "edited" && item.before != null && item.after != null ? (
             <dl className="grid gap-1 pl-7 text-xs text-muted-foreground">
               <div className="grid gap-1 sm:grid-cols-[4rem_1fr]">
                 <dt className="font-medium text-foreground">Before</dt>

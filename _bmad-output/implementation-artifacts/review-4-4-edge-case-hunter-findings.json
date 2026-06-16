@@ -1,0 +1,50 @@
+[
+  {
+    "location": "src/lib/export/generate-bundle.ts:28-30",
+    "trigger_condition": "two or more translator artifacts share the same file path",
+    "guard_snippet": "zip.file(artifact.path, contentWithProvenance) — no deduplication or warning",
+    "potential_consequence": "Later artifact silently overwrites earlier one in the ZIP. User gets incomplete output without notification."
+  },
+  {
+    "location": "src/lib/export/generate-bundle.ts:31",
+    "trigger_condition": "playbook.name contains path traversal characters ('../', '/', '\\0')",
+    "guard_snippet": "playbook.name.replace(/\\s+/g, '-').toLowerCase()",
+    "potential_consequence": "Filename like 'foo/bar.zip' creates unexpected directory structure in download dialog. No validation beyond whitespace normalization."
+  },
+  {
+    "location": "src/components/workbench/agent-studio-workbench.tsx:211",
+    "trigger_condition": "playbook is non-null but exportReadiness.canExport is false (race between render and click)",
+    "guard_snippet": "if (playbook == null) return — only guards null, not readiness",
+    "potential_consequence": "Export proceeds with invalid rule drafts. User downloads a bundle from an invalid state."
+  },
+  {
+    "location": "src/lib/export/add-provenance.ts:12",
+    "trigger_condition": "PROVENANCE_LINE contains backtick characters inside existing generated file content",
+    "guard_snippet": "content.includes(PROVENANCE_LINE) — exact string match",
+    "potential_consequence": "Provenance detection is exact-match only. If generated content incidentally includes the same string (unlikely but possible), dedup fails silently and provenance is not prepended."
+  },
+  {
+    "location": "src/lib/export/download-blob.ts:18-20",
+    "trigger_condition": "browser takes longer than 100 ms to begin the download",
+    "guard_snippet": "setTimeout(() => { document.body.removeChild(anchor); URL.revokeObjectURL(url); }, 100)",
+    "potential_consequence": "Anchor removed from DOM before download starts. Download fails silently in some browsers."
+  },
+  {
+    "location": "src/lib/export/download-blob.ts:6-8",
+    "trigger_condition": "URL.createObjectURL is called more than ~50 times before garbage collection",
+    "guard_snippet": "No cleanup limit or revocation tracking",
+    "potential_consequence": "Memory leak from unreleased object URLs if downloadBlob is called repeatedly and each revocation is delayed by the 100 ms timeout."
+  },
+  {
+    "location": "src/lib/export/add-provenance.ts:38-44",
+    "trigger_condition": "filePath has multiple extensions (e.g., 'file.test.ts')",
+    "guard_snippet": "path.toLowerCase().split('.').pop()",
+    "potential_consequence": "Only the last extension is matched. 'my.config.yaml' → detected as '.yaml' correctly, but 'component.test.tsx' → '.tsx' correctly. Edge case handled correctly — no issue."
+  },
+  {
+    "location": "src/lib/export/add-provenance.ts:40",
+    "trigger_condition": "filePath has no dot (e.g., 'Makefile', 'Dockerfile')",
+    "guard_snippet": "if (!ext) return COMMENT_STYLE[0]",
+    "potential_consequence": "Defaults to '#' prefix. Makefile expects '#', which is correct. Dockerfile expects '#', also correct. Handled."
+  }
+]

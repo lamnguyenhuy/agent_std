@@ -66,3 +66,38 @@
 - `playbook.rules` null/undefined guard absent in `renderRulesSection` — schema validation enforces array type; same pre-existing concern as Claude Code and Cursor translators [`src/lib/translators/windsurf.ts:11`]
 - `compatibilityNotes` invariant only tested on default playbook, not on empty-rules or normalization branches — function returns `[]` unconditionally so branch coverage adds no value here
 - `normalizeMarkdownText` collapses intentional whitespace/formatting — deliberate design decision from Story 3.2; applies to all translators [`src/lib/translators/windsurf.ts:8`]
+
+## Deferred from: code review of 4-3-keep-review-surfaces-synchronized-with-rule-edits (2026-06-16)
+
+- isDraftInvalid zero-width gap — `export-readiness.ts:9`; pre-existing divergence between trim-based and regex-based validation.
+- Single generic error message for invalid drafts — `export-readiness.ts:20`; UX enhancement, not a bug.
+- Stale draft entries on remove error — `agent-studio-workbench.tsx:174-184`; unlikely in React 18 concurrent mode.
+- No committed rules check in export readiness — `export-readiness.ts:14-24`; defensive only.
+- Button title swaps semantic role — `agent-studio-workbench.tsx:221-222`; UX pattern.
+- useMemo re-derives on every render — `agent-studio-workbench.tsx:105-108`; minor perf, existing pattern.
+- No runtime guard on playbook.rules — `export-readiness.ts`; TypeScript sufficient.
+- Export readiness ignores initialRules baseline — `export-readiness.ts`; out of scope for ACs 4-5.
+- AC 6 500 ms target unverifiable — no benchmark in diff.
+
+## Deferred from: code review of 4-4-export-generated-files-bundle (2026-06-16)
+
+- downloadBlob 100 ms timeout brittle — `download-blob.ts:18-20`; cleanup race in slow browsers.
+- Path traversal in archive filename — `generate-bundle.ts:31-32`; playbook.name not sanitized for path chars.
+- Silent catch swallows all errors — `agent-studio-workbench.tsx:220-222`; deferred to Story 4.6.
+- Re-translates on every click — `agent-studio-workbench.tsx:214-215`; minor perf.
+- Race condition bypasses export readiness check — `agent-studio-workbench.tsx:211`; theoretical.
+- No loading state during async generation — `agent-studio-workbench.tsx:210-223`; deferred to Story 4.6.
+- Date.now() in filename violates NFR-6 determinism — `generate-bundle.ts:32`; cosmetic.
+- No guard against rapid multiple clicks — `agent-studio-workbench.tsx:210-223`; low likelihood.
+- Duplicate artifact paths overwrite silently — `generate-bundle.ts:28-30`; unlikely.
+- Object URL memory leak on rapid calls — `download-blob.ts:8,20`; corner case.
+
+## Deferred from: code review of 4-5-export-reviewable-patch (2026-06-16)
+
+- Hunk boundary trimming edge case — `generate-patch.ts:118`; theoretical.
+- LCS DP table O(m×n) memory — `generate-patch.ts:22`; fine for small files.
+- Trailing newline / \r\n endings — `generate-patch.ts:17-18`; generated files use LF.
+- Archive out of sync with diff — `generate-patch-archive.ts:18-24`; unlikely.
+- File paths not escaped — `generate-patch.ts:139-140`; internal paths safe.
+- Three-loop pair building fragile — `agent-studio-workbench.tsx:252-266`; functional.
+- Archive filename hardcoded — `generate-patch-archive.ts:28`; acceptable for MVP.

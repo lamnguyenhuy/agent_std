@@ -42,3 +42,41 @@ describe("AgentStudioWorkbench story contracts", () => {
     expect(workbenchSource).not.toContain("Review — coming in Epic 4")
   })
 })
+
+  it("imports computeExportReadiness from review/export-readiness", () => {
+    expect(workbenchSource).toContain("computeExportReadiness")
+    expect(workbenchSource).toContain("@/lib/review/export-readiness")
+  })
+  it("computes exportReadiness with computeExportReadiness call", () => {
+    expect(workbenchSource).toContain("computeExportReadiness(")
+  })
+  it("derives exportReadiness variable", () => {
+    expect(workbenchSource).toContain("exportReadiness")
+  })
+  it("uses exportReadiness.canExport for Download Patch disabled state", () => {
+    expect(workbenchSource).toContain("exportReadiness.canExport")
+  })
+  it("shows export readiness reason in button title", () => {
+    expect(workbenchSource).toContain("exportReadiness.reason")
+  })
+
+  it("imports generateExportBundle from export/generate-bundle", () => {
+    expect(workbenchSource).toContain("generateExportBundle")
+    expect(workbenchSource).toContain("@/lib/export/generate-bundle")
+  })
+  it("imports downloadBlob from export/download-blob", () => {
+    expect(workbenchSource).toContain("downloadBlob")
+    expect(workbenchSource).toContain("@/lib/export/download-blob")
+  })
+  it("renders a Download Generated Files button", () => {
+    expect(workbenchSource).toContain("Download Generated Files")
+  })
+  it("applies variant='outline' to Download Generated Files", () => {
+    expect(workbenchSource).toContain('variant="outline"')
+  })
+  it("disables Download Generated Files when export is not ready", () => {
+    expect(workbenchSource).toContain("disabled={!exportReadiness.canExport}")
+  })
+  it("calls handleDownloadGeneratedFiles on click", () => {
+    expect(workbenchSource).toContain("handleDownloadGeneratedFiles")
+  })

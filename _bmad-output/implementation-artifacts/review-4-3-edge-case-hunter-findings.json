@@ -1,0 +1,50 @@
+[
+  {
+    "location": "src/lib/review/export-readiness.ts:9",
+    "trigger_condition": "text contains only zero-width spaces (\\u200B, \\u200C, \\u200D, \\uFEFF) or non-breaking spaces (\\u00A0)",
+    "guard_snippet": "function isDraftInvalid(text) { return text.trim().length === 0 }",
+    "potential_consequence": "isDraftInvalid returns false (draft considered valid) but validateRuleText catches these characters — draft can never be committed, yet export readiness reports ready"
+  },
+  {
+    "location": "src/lib/review/export-readiness.ts:14-24",
+    "trigger_condition": "multiple ruleTextDrafts entries are invalid simultaneously",
+    "guard_snippet": "reason: \"Fix invalid Rule text before exporting.\"",
+    "potential_consequence": "User sees single generic reason regardless of count — no way to distinguish one invalid rule from several without manual inspection"
+  },
+  {
+    "location": "src/components/workbench/agent-studio-workbench.tsx:174-184",
+    "trigger_condition": "handleRemoveRule succeeds in setRuleTextDrafts but applyPlaybookUpdate throws or React batches inconsistently",
+    "guard_snippet": "cleanup of draft removed before playbook update — they are independent setState calls",
+    "potential_consequence": "Orphaned draft entries in ruleTextDrafts for rule IDs that no longer exist in playbook.rules; exportReadiness re-derives with stale state"
+  },
+  {
+    "location": "src/lib/review/export-readiness.ts:7-10",
+    "trigger_condition": "ruleTextDrafts contains entry for a rule ID that was removed from playbook.rules then re-added with different text",
+    "guard_snippet": "No cross-check between ruleTextDrafts keys and playbook.rules IDs",
+    "potential_consequence": "Stale draft masks the committed rule text in getRuleDisplayText — display shows old invalid draft instead of current committed text"
+  },
+  {
+    "location": "src/components/workbench/agent-studio-workbench.tsx:145-148",
+    "trigger_condition": "ruleTextDrafts[ruleId] contains only zero-width spaces (\\u200B etc.)",
+    "guard_snippet": "draft.trim().length === 0",
+    "potential_consequence": "getRuleError returns undefined (no error), but validateRuleText would reject this text — UI shows draft as 'valid' but rule can never be committed"
+  },
+  {
+    "location": "tests/e2e/sample-flow.spec.ts (export readiness block)",
+    "trigger_condition": "Page contains a second element with role 'button' whose accessible name matches /download/i (e.g., 'Download Plan', 'Download Report')",
+    "guard_snippet": "const downloadPatch = page.getByRole('button', { name: /download/i })",
+    "potential_consequence": "Test interacts with or asserts on the wrong element — false pass or element-not-found failure"
+  },
+  {
+    "location": "src/lib/review/export-readiness.ts:17-20",
+    "trigger_condition": "playbook is non-null but has empty rules array, ruleTextDrafts is empty",
+    "guard_snippet": "Returns { canExport: true } without checking playbook.rules content",
+    "potential_consequence": "Export readiness reports true for an empty playbook with no rules — no review surface exists but export is permitted"
+  },
+  {
+    "location": "src/components/workbench/agent-studio-workbench.tsx:105-108",
+    "trigger_condition": "ruleTextDrafts setState uses spread which creates new object reference even when content unchanged",
+    "guard_snippet": "useMemo(() => computeExportReadiness(playbook, ruleTextDrafts), [playbook, ruleTextDrafts])",
+    "potential_consequence": "Re-render cascade on unrelated state updates — unnecessary computeExportReadiness call every render (minor perf)"
+  }
+]
