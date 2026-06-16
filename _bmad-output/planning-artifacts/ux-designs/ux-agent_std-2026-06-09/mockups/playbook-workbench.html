@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Studio — Playbook Workbench Mock</title>
+  <style>
+    :root {
+      --background: #f7f8fa;
+      --foreground: #15181d;
+      --surface: #ffffff;
+      --surface-subtle: #f1f3f5;
+      --surface-code: #101418;
+      --foreground-code: #e7eef5;
+      --border: #d8dde3;
+      --border-strong: #aeb7c2;
+      --muted: #6b7280;
+      --primary: #0f766e;
+      --accent: #2563eb;
+      --success: #15803d;
+      --warning: #b45309;
+      --warning-surface: #fff7ed;
+      --destructive: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    button, input { font: inherit; }
+    .app { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 650; }
+    .brand-mark {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: var(--primary); color: white;
+      display: grid; place-items: center; font-size: 13px;
+    }
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+    .btn {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--foreground);
+      padding: 7px 10px;
+      cursor: default;
+    }
+    .btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
+    .workbench {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 280px minmax(420px, 1fr) 430px;
+      gap: 16px;
+      padding: 16px;
+      min-height: 0;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-title { font-weight: 650; }
+    .panel-body { padding: 12px; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 9999px;
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .badge.green { color: var(--success); border-color: #b7dfc3; background: #f0fdf4; }
+    .file-list, .section-list, .rule-list, .plan-list { display: grid; gap: 8px; }
+    .file-row, .section-row, .rule-row, .plan-row {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      background: var(--surface);
+    }
+    .section-row.active { border-color: var(--primary); background: #f0fdfa; }
+    .row-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .path { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .main-scroll, .inspector-scroll { height: calc(100vh - 88px); overflow: auto; }
+    .editor-grid { display: grid; gap: 16px; }
+    .section-block { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .section-block header {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-subtle);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .rule-row { display: grid; gap: 6px; }
+    .rule-input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px;
+      color: var(--foreground);
+      background: var(--surface);
+    }
+    .tabs { display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .tab { border: 1px solid var(--border); border-radius: 6px; padding: 6px 9px; color: var(--muted); background: var(--surface); }
+    .tab.active { border-color: var(--accent); color: white; background: var(--accent); }
+    .code {
+      background: var(--surface-code);
+      color: var(--foreground-code);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      overflow: auto;
+      min-height: 220px;
+    }
+    .note {
+      margin-top: 10px;
+      border-radius: 6px;
+      background: var(--warning-surface);
+      color: var(--warning);
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    .diff { display: grid; gap: 8px; margin-top: 12px; }
+    .diff-row { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; padding: 8px; border-radius: 6px; background: var(--surface-subtle); }
+    .diff-row.add { color: var(--success); }
+    .diff-row.warn { color: var(--warning); }
+    @media (max-width: 1100px) {
+      .workbench { grid-template-columns: 1fr; }
+      .main-scroll, .inspector-scroll { height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">AS</div>
+        <div>
+          <div>Agent Studio</div>
+          <div class="muted">sample-nextjs-repo / Frontend React Standard</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="btn">Download generated files</button>
+        <button class="btn primary">Download patch</button>
+      </div>
+    </header>
+
+    <section class="workbench">
+      <aside class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Sample Repo</span>
+          <span class="badge green">Detected</span>
+        </div>
+        <div class="panel-body file-list">
+          <div class="file-row"><div class="path">CLAUDE.md</div><div class="muted">Project memory</div></div>
+          <div class="file-row"><div class="path">.cursorrules</div><div class="muted">Cursor rules</div></div>
+          <div class="file-row"><div class="path">.claude/skills/code-review.md</div><div class="muted">Skill</div></div>
+          <div class="file-row"><div class="path">docs/conventions.md</div><div class="muted">Context</div></div>
+        </div>
+        <div class="panel-header">
+          <span class="panel-title">Agent Playbook</span>
+        </div>
+        <div class="panel-body section-list">
+          <div class="section-row"><div class="row-top"><b>Skills</b><span class="badge">Imported</span></div></div>
+          <div class="section-row"><div class="row-top"><b>Agents</b><span class="badge">Imported</span></div></div>
+          <div class="section-row active"><div class="row-top"><b>Rules</b><span class="badge green">Editable</span></div></div>
+          <div class="section-row"><div class="row-top"><b>Context</b><span class="badge">Imported</span></div></div>
+          <div class="section-row"><div class="row-top"><b>Tool Translators</b><span class="badge">3 enabled</span></div></div>
+        </div>
+      </aside>
+
+      <section class="panel main-scroll">
+        <div class="panel-header">
+          <span class="panel-title">Rules Editor</span>
+          <button class="btn primary">Add rule</button>
+        </div>
+        <div class="panel-body editor-grid">
+          <div class="section-block">
+            <header><b>Editable Rules</b><span class="muted">Changes update previews immediately</span></header>
+            <div class="panel-body rule-list">
+              <div class="rule-row">
+                <div class="row-top"><span class="badge">Imported</span><span class="muted">from .cursorrules</span></div>
+                <input class="rule-input" value="Use Tailwind classes, never inline styles.">
+              </div>
+              <div class="rule-row">
+                <div class="row-top"><span class="badge green">Added</span><span class="muted">user edit</span></div>
+                <input class="rule-input" value="All UI components must include loading, error, and empty states when applicable.">
+              </div>
+            </div>
+          </div>
+          <div class="section-block">
+            <header><b>Imported Skills</b><span class="badge">MVP read-only</span></header>
+            <div class="panel-body file-list">
+              <div class="file-row"><div class="path">code-review</div><div class="muted">.claude/skills/code-review.md</div></div>
+              <div class="file-row"><div class="path">test-writer</div><div class="muted">.claude/skills/test-writer.md</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel inspector-scroll">
+        <div class="tabs">
+          <button class="tab active">Claude Code</button>
+          <button class="tab">Cursor</button>
+          <button class="tab">Windsurf</button>
+          <button class="tab">Review</button>
+        </div>
+        <div class="panel-body">
+          <div class="code"># CLAUDE.md
+
+Generated from .agent-studio/playbook.yaml.
+Do not edit generated sections directly.
+
+## Frontend behavior
+- Use Tailwind classes, never inline styles.
+- All UI components must include loading, error, and empty states when applicable.
+
+## Skills
+- Use code-review when reviewing component changes.
+- Use test-writer before implementation when tests are missing.</div>
+          <div class="note">Cursor output will flatten imported skill guidance into project rules because skill folders are not preserved in the same structure.</div>
+
+          <div class="section-block" style="margin-top: 14px;">
+            <header><b>Plan</b><span class="muted">4 file changes</span></header>
+            <div class="panel-body plan-list">
+              <div class="plan-row"><div class="row-top"><span class="path">+ .agent-studio/playbook.yaml</span><span class="badge green">Added</span></div></div>
+              <div class="plan-row"><div class="row-top"><span class="path">~ CLAUDE.md</span><span class="badge">Modified</span></div></div>
+              <div class="plan-row"><div class="row-top"><span class="path">~ .cursor/rules/frontend-standard.mdc</span><span class="badge">Modified</span></div></div>
+              <div class="plan-row"><div class="row-top"><span class="path">+ .windsurf/rules/frontend-standard.md</span><span class="badge green">Added</span></div></div>
+            </div>
+          </div>
+
+          <div class="section-block" style="margin-top: 14px;">
+            <header><b>Behavior Diff</b><span class="muted">Template-based</span></header>
+            <div class="panel-body diff">
+              <div class="diff-row add">+ Agents must follow: "All UI components must include loading, error, and empty states when applicable."</div>
+              <div class="diff-row warn">! Cursor may flatten imported skill guidance into project rules.</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

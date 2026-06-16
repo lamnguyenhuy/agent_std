@@ -1,0 +1,23 @@
+installation:
+  version: 6.8.0
+  installDate: 2026-06-09T02:12:31.666Z
+  lastUpdated: 2026-06-10T04:01:21.630Z
+modules:
+  - name: core
+    version: 6.8.0
+    installDate: 2026-06-09T02:12:31.648Z
+    lastUpdated: 2026-06-10T04:01:21.630Z
+    source: built-in
+    npmPackage: null
+    repoUrl: null
+  - name: bmm
+    version: 6.8.0
+    installDate: 2026-06-09T02:12:31.634Z
+    lastUpdated: 2026-06-10T04:01:21.630Z
+    source: built-in
+    npmPackage: null
+    repoUrl: null
+ides:
+  - claude-code
+  - codex
+  - antigravity
